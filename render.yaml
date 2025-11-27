@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: voice-translator-offline
+    runtime: python
+    buildCommand: "cd web && pip install -r requirements_offline.txt && python install_models.py"
+    startCommand: "cd web && python app_offline.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 8081
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /
+    region: oregon
