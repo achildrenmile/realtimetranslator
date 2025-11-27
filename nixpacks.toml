@@ -1,11 +1,11 @@
 # Nixpacks configuration for Railway deployment
-# Models are downloaded at runtime to keep image size small
+# IMPORTANT: Models download at RUNTIME (not build time) to keep image small
 [phases.setup]
 nixPkgs = ["python311", "gcc", "zlib"]
 pythonVersion = "3.11"
 
 [phases.install]
-cmds = ["python -m pip install --upgrade pip", "python -m pip install -r web/requirements_offline.txt"]
+cmds = ["python -m pip install --upgrade pip", "python -m pip install -r requirements.txt"]
 
 [start]
 cmd = "cd web && python app_offline.py"
