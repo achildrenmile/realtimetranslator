@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>achildrenmile Voice Translator - Web</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4A90E2 0%, #2E5F8E 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4A90E2 0%, #2E5F8E 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #5DADE2;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: #4A90E2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #5DADE2;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-danger {
+            background: #6C9BCF;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .recording {
+            animation: recording-pulse 1s infinite;
+        }
+        
+        @keyframes recording-pulse {
+            0%, 100% { 
+                background: #6C9BCF;
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+            }
+            50% { 
+                background: #ff6659;
+                box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+            }
+        }
+        
+        .translation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .translation-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 300px;
+        }
+        
+        .translation-box h3 {
+            margin-bottom: 15px;
+            color: #4A90E2;
+            font-size: 1.2em;
+        }
+        
+        .translation-box textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        .translation-box textarea:focus {
+            outline: none;
+            border-color: #4A90E2;
+        }
+        
+        .text-input-section {
+            padding: 30px;
+            background: white;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .text-input-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .text-input-group {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .text-input-group textarea {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        @media (max-width: 768px) {
+            .translation-area {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 achildrenmile Voice Translator</h1>
+            <p>Real-Time Chinese ↔ English Translation - Web Version</p>
+        </header>
+        
+        <div class="status">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <div>
+                <span id="modelStatus">Translation: MyMemory API</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Translation Direction:</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="direction" value="zh-en" checked>
+                        Chinese → English
+                    </label>
+                    <label>
+                        <input type="radio" name="direction" value="en-zh">
+                        English → Chinese
+                    </label>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn btn-success" id="startBtn" onclick="startRecording()">
+                    🎤 Start Listening
+                </button>
+                <button class="btn btn-danger" id="stopBtn" onclick="stopRecording()" disabled>
+                    ⏹️ Stop Listening
+                </button>
+                <button class="btn btn-primary" onclick="clearDisplay()">
+                    🗑️ Clear Display
+                </button>
+            </div>
+        </div>
+        
+        <div class="translation-area">
+            <div class="translation-box">
+                <h3>Original Text</h3>
+                <textarea id="originalText" readonly placeholder="Original text will appear here..."></textarea>
+            </div>
+            <div class="translation-box">
+                <h3>Translation</h3>
+                <textarea id="translatedText" readonly placeholder="Translation will appear here..."></textarea>
+            </div>
+        </div>
+        
+        <div class="text-input-section">
+            <h3>Enter Text to Translate</h3>
+            <div class="text-input-group">
+                <textarea id="manualInput" placeholder="Type your text here..." autofocus></textarea>
+                <button class="btn btn-primary" onclick="translateText()">
+                    Translate →
+                </button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Web-Based Translation</strong> • Open Source Translation API</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Translation Service: MyMemory API (Free) | Speech: Google Speech API
+            </p>
+            <p style="margin-top: 5px; font-size: 0.8em; color: #999;">
+                Note: Microphone requires HTTPS in production. For testing on localhost, HTTP is allowed.
+                <button onclick="testMicrophone()" style="margin-left: 10px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
+                    Test Microphone
+                </button>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Voice recording variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        
+        // Socket event handlers
+        socket.on('connect', () => {
+            updateStatus('Connected', true);
+        });
+        
+        socket.on('disconnect', () => {
+            updateStatus('Disconnected', false);
+        });
+        
+        socket.on('status', (data) => {
+            console.log('Status:', data.message);
+        });
+        
+        socket.on('translation_result', (data) => {
+            if (data.error) {
+                alert('Translation error: ' + data.error);
+                return;
+            }
+            displayTranslation(data.original, data.translated);
+        });
+        
+        socket.on('recognition_result', (data) => {
+            if (data.error) {
+                console.error('Recognition error:', data.error);
+                alert('Speech recognition error: ' + data.error);
+                return;
+            }
+            document.getElementById('originalText').value = data.text;
+        });
+        
+        socket.on('full_translation_result', (data) => {
+            console.log('Translation result received:', data);
+            updateStatus('Connected', true);
+            
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            displayTranslation(data.original, data.translated);
+        });
+        
+        // Update status display
+        function updateStatus(text, connected) {
+            document.getElementById('statusText').textContent = text;
+            const dot = document.getElementById('statusDot');
+            dot.style.background = connected ? '#5DADE2' : '#6C9BCF';
+        }
+        
+        // Get current language direction
+        function getDirection() {
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            if (direction === 'zh-en') {
+                return { source: 'zh', target: 'en' };
+            } else {
+                return { source: 'en', target: 'zh' };
+            }
+        }
+        
+        // Start recording
+        async function startRecording() {
+            try {
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } 
+                });
+                
+                console.log('Microphone access granted');
+                
+                // Use standard audio format
+                let options = { mimeType: 'audio/webm' };
+                
+                // Try different formats if webm not supported
+                if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                    console.log('webm not supported, trying alternatives');
+                    if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                        options = { mimeType: 'audio/ogg' };
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        options = { mimeType: 'audio/mp4' };
+                    } else {
+                        options = {};
+                    }
+                }
+                
+                console.log('Using format:', options.mimeType || 'default');
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        console.log('Audio chunk received:', event.data.size, 'bytes');
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    console.log('Recording stopped, processing...');
+                    console.log('Total chunks:', audioChunks.length);
+                    
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                    console.log('Audio blob size:', audioBlob.size, 'bytes', 'type:', mediaRecorder.mimeType);
+                    
+                    if (audioBlob.size === 0) {
+                        alert('No audio recorded. Please try again and speak clearly.');
+                        return;
+                    }
+                    
+                    // Convert to WAV format in browser before sending
+                    try {
+                        updateStatus('Converting audio...', true);
+                        const wavBlob = await convertToWav(audioBlob);
+                        console.log('Converted to WAV, size:', wavBlob.size, 'bytes');
+                        
+                        // Convert to base64
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64Audio = reader.result;
+                            const direction = getDirection();
+                            
+                            console.log('Sending WAV audio for translation...');
+                            updateStatus('Processing speech...', true);
+                            
+                            // Send for recognition and translation
+                            socket.emit('translate_audio', {
+                                audio: base64Audio,
+                                source_lang: direction.source,
+                                target_lang: direction.target
+                            });
+                        };
+                        
+                        reader.onerror = (error) => {
+                            console.error('FileReader error:', error);
+                            alert('Error reading audio data');
+                            updateStatus('Ready');
+                        };
+                        
+                        reader.readAsDataURL(wavBlob);
+                    } catch (error) {
+                        console.error('Audio conversion error:', error);
+                        alert('Failed to convert audio: ' + error.message);
+                        updateStatus('Ready');
+                    }
+                };
+                
+                mediaRecorder.onerror = (event) => {
+                    console.error('MediaRecorder error:', event.error);
+                    alert('Recording error: ' + event.error);
+                };
+                
+                mediaRecorder.start(1000); // Collect data every second
+                isRecording = true;
+                
+                console.log('Recording started');
+                
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('startBtn').classList.add('recording');
+                
+                // Show which language we're listening for
+                const direction = getDirection();
+                const listeningLang = direction.source === 'zh' ? 'Chinese (中文)' : 'English';
+                updateStatus(`🎤 Recording ${listeningLang}... (speak now)`, true);
+                
+            } catch (error) {
+                console.error('Microphone error:', error);
+                let errorMsg = 'Microphone access error: ' + error.message;
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMsg = 'Microphone access denied. Please allow microphone access in your browser settings.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg = 'No microphone found. Please connect a microphone and try again.';
+                } else if (error.name === 'NotSupportedError') {
+                    errorMsg = 'Your browser does not support audio recording. Please use Chrome or Edge.';
+                }
+                
+                alert(errorMsg);
+                updateStatus('Connected', true);
+            }
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('startBtn').classList.remove('recording');
+                updateStatus('Connected', true);
+            }
+        }
+        
+        // Translate typed text
+        function translateText() {
+            const text = document.getElementById('manualInput').value.trim();
+            if (!text) {
+                alert('Please enter text to translate');
+                return;
+            }
+            
+            const direction = getDirection();
+            
+            socket.emit('translate_text', {
+                text: text,
+                source_lang: direction.source,
+                target_lang: direction.target
+            });
+        }
+        
+        // Display translation (auto-clear)
+        function displayTranslation(original, translated) {
+            clearDisplay();
+            document.getElementById('originalText').value = original;
+            document.getElementById('translatedText').value = translated;
+            document.getElementById('manualInput').value = '';
+        }
+        
+        // Clear display
+        function clearDisplay() {
+            document.getElementById('originalText').value = '';
+            document.getElementById('translatedText').value = '';
+        }
+        
+        // Convert audio blob to WAV format using Web Audio API
+        async function convertToWav(audioBlob) {
+            console.log('Starting audio conversion to WAV...');
+            
+            // Read blob as ArrayBuffer
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            
+            // Create AudioContext
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 16000
+            });
+            
+            // Decode audio data
+            console.log('Decoding audio...');
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            console.log('Audio decoded - Duration:', audioBuffer.duration.toFixed(2), 'seconds, Channels:', audioBuffer.numberOfChannels);
+            
+            // Convert to mono if needed
+            let channelData;
+            if (audioBuffer.numberOfChannels === 1) {
+                channelData = audioBuffer.getChannelData(0);
+            } else {
+                // Mix down to mono
+                const left = audioBuffer.getChannelData(0);
+                const right = audioBuffer.getChannelData(1);
+                channelData = new Float32Array(left.length);
+                for (let i = 0; i < left.length; i++) {
+                    channelData[i] = (left[i] + right[i]) / 2;
+                }
+            }
+            
+            // Convert float32 samples to int16
+            const samples = new Int16Array(channelData.length);
+            for (let i = 0; i < channelData.length; i++) {
+                const s = Math.max(-1, Math.min(1, channelData[i]));
+                samples[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            
+            // Create WAV file
+            const sampleRate = audioBuffer.sampleRate;
+            const numChannels = 1;
+            const bitDepth = 16;
+            const byteRate = sampleRate * numChannels * bitDepth / 8;
+            const blockAlign = numChannels * bitDepth / 8;
+            const dataSize = samples.length * 2;
+            
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+            
+            // WAV Header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true); // fmt chunk size
+            view.setUint16(20, 1, true);  // PCM format
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+            
+            // Write PCM samples
+            const dataView = new Int16Array(buffer, 44);
+            dataView.set(samples);
+            
+            console.log('WAV file created - Sample rate:', sampleRate, 'Hz, Size:', buffer.byteLength, 'bytes');
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+        
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+        
+        // Test microphone access
+        async function testMicrophone() {
+            try {
+                console.log('Testing microphone...');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('✓ Microphone access granted');
+                alert('✓ Microphone is working!\n\nYou can now use the "Start Listening" feature.');
+                
+                // Stop all tracks
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                console.error('Microphone test failed:', error);
+                let msg = 'Microphone test failed:\n\n';
+                
+                if (error.name === 'NotAllowedError') {
+                    msg += 'Permission denied. Please allow microphone access in your browser.';
+                } else if (error.name === 'NotFoundError') {
+                    msg += 'No microphone found. Please connect a microphone.';
+                } else if (error.name === 'NotSupportedError') {
+                    msg += 'Your browser does not support microphone access. Use Chrome or Edge.';
+                } else {
+                    msg += error.message;
+                }
+                
+                alert(msg);
+            }
+        }
+        
+        // Allow Enter key to translate (Shift+Enter for new line)
+        document.getElementById('manualInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                translateText();
+            }
+        });
+        
+        // Focus on input
+        document.getElementById('manualInput').focus();
+    </script>
+</body>
+</html>
