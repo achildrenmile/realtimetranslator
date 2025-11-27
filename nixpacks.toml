@@ -5,7 +5,7 @@ nixPkgs = ["python311", "gcc", "zlib"]
 pythonVersion = "3.11"
 
 [phases.install]
-cmds = ["python -m pip install --upgrade pip", "python -m pip install -r requirements.txt"]
+cmds = ["pip install -r requirements.txt"]
 
 [start]
 cmd = "cd web && python app_offline.py"
