@@ -1,0 +1,12 @@
+# Nixpacks configuration for Railway deployment
+[phases.setup]
+nixPkgs = ["python311", "gcc", "zlib"]
+
+[phases.install]
+cmds = ["pip install -r web/requirements_offline.txt"]
+
+[phases.build]
+cmds = ["cd web && python install_models.py"]
+
+[start]
+cmd = "cd web && python app_offline.py"

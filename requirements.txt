@@ -1,12 +1,25 @@
-# 100% Open Source Voice Translation Dependencies
-SpeechRecognition==3.10.0
-argostranslate==1.9.1
-pyttsx3==2.90
-pyaudio==0.2.14
+# Offline Voice Translator - Python Dependencies
+# For deployment to OpenShift/Kubernetes
 
-# Optional: Vosk for better offline speech recognition
-# Download models from: https://alphacephei.com/vosk/models
+# Web Framework
+Flask==3.1.2
+Flask-SocketIO==5.5.1
+python-engineio==4.11.2
+python-socketio==5.12.1
+
+# WebSocket support
+gevent==24.2.1
+gevent-websocket==0.10.1
+
+# Offline Speech Recognition
 vosk==0.3.45
 
-# Optional: PocketSphinx for offline speech recognition (fallback)
-pocketsphinx==5.0.3
+# Offline Translation
+argostranslate==1.10.0
+
+# Required for health checks
+requests==2.32.5
+
+# Production WSGI server
+gunicorn==21.2.0
+eventlet==0.35.2
