@@ -1,0 +1,28 @@
+# Fly.io configuration for offline voice translator
+# Optimized for free tier with minimal resources
+
+app = "voice-translator-offline"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[mounts]
+  source = "data"
+  destination = "/data"
