@@ -3,7 +3,7 @@ services:
     name: voice-translator-offline
     runtime: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "cd web && python app_offline.py"
+    startCommand: "cd web && gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app_offline:app"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -12,4 +12,3 @@ services:
     plan: free
     autoDeploy: true
     healthCheckPath: /
-    region: oregon
